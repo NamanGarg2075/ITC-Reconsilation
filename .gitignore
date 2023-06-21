@@ -1,0 +1,6 @@
+# Specification files
+*.spec
+
+# dir
+build
+Data
