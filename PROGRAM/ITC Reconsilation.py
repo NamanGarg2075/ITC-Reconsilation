@@ -7,12 +7,7 @@ def exepy():
     #!/usr/bin/env python
     # coding: utf-8
 
-    # In[3]:
-
-    import pandas as pd
-    import numpy as np
-
-    # In[4]:
+    # In[2]:
 
     pur_path = input("Enter *Purchase* File Path: ")
     b2b_path = input("Enter *B2B* File Path: ")
@@ -52,7 +47,14 @@ def exepy():
         1
     ]
 
-    # In[5]:
+    # In[3]:
+
+    # Changing LAST MONTH RECO file Voucher Date to Date
+    if last_month_input.lower() == "y":
+        pending_last_month.rename(columns={"Voucher Date": "Date"}, inplace=True)
+        extra_last_month.rename(columns={"Voucher Date": "Date"}, inplace=True)
+
+    # In[4]:
 
     # Renaming columns of B2B and B2B CDNR
     b2b.rename(
@@ -91,12 +93,12 @@ def exepy():
         pending_last_month.rename(columns={"SUPPLIER NAME": "Trade Name"}, inplace=True)
         extra_last_month.rename(columns={"SUPPLIER NAME": "Trade Name"}, inplace=True)
 
-    # In[6]:
+    # In[5]:
 
     # Dropping 'Regular' column from b2b_cdnr
     b2b_cdnr.drop(columns={"Note Supply type"}, inplace=True)
 
-    # In[7]:
+    # In[6]:
 
     # converting to negative values of 'Credit Note'
     for i in range(b2b_cdnr.shape[0]):
@@ -107,7 +109,7 @@ def exepy():
             b2b_cdnr.loc[i, "Central Tax(₹)"] = 0 - b2b_cdnr["Central Tax(₹)"][i]
             b2b_cdnr.loc[i, "State/UT Tax(₹)"] = 0 - b2b_cdnr["State/UT Tax(₹)"][i]
 
-    # In[8]:
+    # In[7]:
 
     # Concatinating b2b_cdnr data and B2B to B2B
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
@@ -115,7 +117,7 @@ def exepy():
     # Taking only those rows with 'No' values
     b2b = b2b[b2b["Supply Attract Reverse Charge"] == "No"]
 
-    # In[9]:
+    # In[8]:
 
     # Getting Required Data
     purchase = purchase[
@@ -135,7 +137,7 @@ def exepy():
     ]
     b2b = b2b.iloc[:, :13]
 
-    # In[10]:
+    # In[9]:
 
     # Changing PURCHASE columns data type
     purchase[["Gross Total", "BASIC", "CGST", "SGST", "IGST"]] = purchase[
@@ -168,7 +170,7 @@ def exepy():
     )
     b2b["Invoice Date"] = pd.to_datetime(b2b["Invoice Date"], dayfirst=True)
 
-    # In[11]:
+    # In[10]:
 
     # Renaming columns
     purchase.rename(columns={"Particulars": "Trade Name"}, inplace=True)
@@ -179,12 +181,12 @@ def exepy():
     purchase.insert(2, "REMARKS", REMARKS)
     purchase.insert(12, "STATUS", STATUS)
 
-    # In[12]:
+    # In[11]:
 
     # Filling REMARKS column
     purchase["REMARKS"] = "AS PER BOOKS"
 
-    # In[13]:
+    # In[12]:
 
     # Creating Dummy Dataframe for concatinating
     b2b_df = pd.DataFrame()
@@ -203,7 +205,7 @@ def exepy():
     b2b_df["IGST"] = b2b["Integrated Tax(₹)"]
     b2b_df["STATUS"] = ""
 
-    # In[14]:
+    # In[13]:
 
     if last_month_input.lower() == "y":
         # Adding B2B data below PURCHASE
@@ -213,32 +215,32 @@ def exepy():
     else:
         main_data = pd.concat([purchase, b2b_df], ignore_index=True)
 
-    # In[15]:
+    # In[14]:
 
     # Setting GST NO column
     main_data["GSTIN/UIN"] = main_data["GSTIN/UIN"].str.replace("_x000D_\n", "")
     main_data["GSTIN/UIN"] = main_data["GSTIN/UIN"].str.replace("\n", "")
 
-    # In[16]:
+    # In[15]:
 
     # Calculating GROSS column
     main_data["Gross Total"] = (
         main_data["BASIC"] + main_data["CGST"] + main_data["SGST"] + main_data["IGST"]
     )
 
-    # In[17]:
+    # In[16]:
 
     # Creating SUPPLIER NAME column
     supplier_name = ""
     main_data.insert(2, "SUPPLIER NAME", supplier_name)
 
-    # In[18]:
+    # In[17]:
 
     # Separating 'AS PER BOOKS' and 'AS PER 2B' from main_data
     main_asp_books = main_data[main_data["REMARKS"] == "AS PER BOOKS"]
     main_asp_2b = main_data[main_data["REMARKS"] == "AS PER 2B"]
 
-    # In[19]:
+    # In[18]:
 
     # Grouping on the basis of GSTIN
     books_gstin_join = (
@@ -251,7 +253,7 @@ def exepy():
     main_asp_2b = pd.merge(main_asp_2b, books_gstin_join, how="left", on="GSTIN/UIN")
     main_asp_2b["Trade Name_y"].fillna(main_asp_2b["Trade Name_x"], inplace=True)
 
-    # In[20]:
+    # In[19]:
 
     # Transfering column [Supplier Name]
     main_asp_2b.loc[:, "SUPPLIER NAME"] = main_asp_2b["Trade Name_y"]
@@ -259,6 +261,38 @@ def exepy():
 
     main_data = pd.concat([main_asp_books, main_asp_2b], ignore_index=True)
     main_data.drop(columns=["Trade Name", "Trade Name_x", "Trade Name_y"], inplace=True)
+
+    # In[ ]:
+
+    # In[ ]:
+
+    # In[20]:
+
+    # Filling NAN GSTIN
+
+    gstin_join_2b = (
+        main_asp_2b.groupby(["SUPPLIER NAME", "GSTIN/UIN"])["BASIC"].sum().reset_index()
+    )
+
+    gstin_join_2b = gstin_join_2b.drop(columns=["BASIC"])
+
+    gstin_join_books = (
+        main_asp_books.groupby(["SUPPLIER NAME", "GSTIN/UIN"])["BASIC"]
+        .sum()
+        .reset_index()
+    )
+
+    gstin_join_books = gstin_join_books.drop(columns=["BASIC"])
+
+    main_data = pd.merge(main_data, gstin_join_2b, how="outer", on="SUPPLIER NAME")
+
+    main_data["GSTIN/UIN_y"].fillna(main_data["GSTIN/UIN_x"], inplace=True)
+
+    main_data["GSTIN/UIN_x"] = main_data["GSTIN/UIN_y"]
+
+    main_data.drop(columns=["GSTIN/UIN_y"], inplace=True)
+
+    main_data.rename(columns={"GSTIN/UIN_x": "GSTIN/UIN"}, inplace=True)
 
     # In[21]:
 
@@ -707,19 +741,22 @@ def exepy():
 
     # Creating Pivot for both
     aspbooks_pivot = (
-        aspbooks.groupby(["SUPPLIER NAME", "GSTIN/UIN"], dropna=False)
+        aspbooks.groupby(["SUPPLIER NAME", "GSTIN/UIN", "Month", "Year"], dropna=False)
         .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
         .reset_index()
     )
     asp2b_pivot = (
-        asp2b.groupby(["SUPPLIER NAME", "GSTIN/UIN"], dropna=False)
+        asp2b.groupby(["SUPPLIER NAME", "GSTIN/UIN", "Month", "Year"], dropna=False)
         .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
         .reset_index()
     )
 
     # Merging Both Pivot Table
     summary_df = pd.merge(
-        asp2b_pivot, aspbooks_pivot, how="outer", on=["SUPPLIER NAME", "GSTIN/UIN"]
+        asp2b_pivot,
+        aspbooks_pivot,
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Month", "Year"],
     )
 
     # Renaming Columns Name
@@ -758,13 +795,17 @@ def exepy():
     summary_df["IGST_diff"] = summary_df["2B IGST"] - summary_df["BOOKS IGST"]
 
     # Addition of All GST's Diff
-    # summary_df['GST_diff_total'] = summary_df['CGST_diff'] + summary_df['SGST_diff'] + summary_df['IGST_diff']
+    summary_df["GST_diff_total"] = (
+        summary_df["CGST_diff"] + summary_df["SGST_diff"] + summary_df["IGST_diff"]
+    )
 
     # Rearrancing Columns
     summary_df = summary_df[
         [
             "SUPPLIER NAME",
             "GSTIN/UIN",
+            "Month",
+            "Year",
             "2B BASIC",
             "BOOKS BASIC",
             "2B CGST",
@@ -777,10 +818,360 @@ def exepy():
             "CGST_diff",
             "SGST_diff",
             "IGST_diff",
+            "GST_diff_total",
         ]
     ]
 
     # In[44]:
+
+    # Creating STATUS column
+    summary_df.loc[:, "STATUS"] = ""
+
+    # Filling STATUS column with 'OK', 'PENDING' and 'EXTRA'
+    for i in range(summary_df.shape[0]):
+        if summary_df.loc[i, "GST_diff_total"] > 9:
+            summary_df.loc[i, "STATUS"] = "Extra Claimed"
+        elif summary_df.loc[i, "GST_diff_total"] < -9:
+            summary_df.loc[i, "STATUS"] = "Pending Claim"
+        else:
+            summary_df.loc[i, "STATUS"] = "OK"
+
+    # In[45]:
+
+    # Joining Data for STATUS column
+    main_data_df = pd.merge(
+        main_data_df,
+        summary_df[["SUPPLIER NAME", "GSTIN/UIN", "Month", "Year", "STATUS"]],
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Month", "Year"],
+    )
+
+    # Dropping STATUS_x column
+    main_data_df.drop(columns={"STATUS_x"}, inplace=True)
+
+    # Renaming 'STATUS_y' column to 'STATUS'
+    main_data_df.rename(columns={"STATUS_y": "STATUS"}, inplace=True)
+
+    # In[46]:
+
+    # /******************************  LAST MONTH ********************************/
+    current_month = pd.Timestamp.now().month
+    current_yr = pd.Timestamp.now().year
+
+    # creating LAST CLAIM MONTH column
+    main_data_df["LAST CLAIM MONTH"] = ""
+
+    month = pd.to_datetime(main_data_df["Supplier Invoice Date"]).dt.month
+    year = pd.to_datetime(main_data_df["Supplier Invoice Date"]).dt.year
+
+    data_month = pd.to_datetime(main_data_df["Supplier Invoice Date"]).dt.month_name()
+    data_year = pd.to_datetime(main_data_df["Supplier Invoice Date"]).dt.year
+
+    # converting current file month to number
+    current_monn_file = pd.to_datetime(current_month_name, format="%B").month
+
+    for i in range(main_data_df.shape[0]):
+        if (month[i] < current_monn_file) or (year[i] < current_yr):
+            main_data_df.loc[
+                i, "LAST CLAIM MONTH"
+            ] = f"{data_month[i]} {data_year[i]} CLAIM"
+
+    # In[47]:
+
+    pending_data = main_data_df[main_data_df["STATUS"] == "Pending Claim"]
+    extra_data = main_data_df[main_data_df["STATUS"] == "Extra Claimed"]
+
+    # In[ ]:
+
+    # In[ ]:
+
+    # In[48]:
+
+    pending_asp_book = pending_data[pending_data["REMARKS"] == "AS PER BOOKS"]
+    pending_asp_2b = pending_data[pending_data["REMARKS"] == "AS PER 2B"]
+
+    extra_asp_book = extra_data[extra_data["REMARKS"] == "AS PER BOOKS"]
+    extra_asp_2b = extra_data[extra_data["REMARKS"] == "AS PER 2B"]
+
+    # In[49]:
+
+    # Creating Pivot for pending both
+    pending_asp_books_pivot = (
+        pending_asp_book.groupby(
+            ["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"], dropna=False
+        )
+        .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
+        .reset_index()
+    )
+    pending_asp_2b_pivot = (
+        pending_asp_2b.groupby(
+            ["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"], dropna=False
+        )
+        .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
+        .reset_index()
+    )
+
+    # Creating Pivot for extra both
+    extra_asp_books_pivot = (
+        extra_asp_book.groupby(
+            ["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"], dropna=False
+        )
+        .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
+        .reset_index()
+    )
+    extra_asp_2b_pivot = (
+        extra_asp_2b.groupby(
+            ["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"], dropna=False
+        )
+        .agg({"BASIC": "sum", "CGST": "sum", "SGST": "sum", "IGST": "sum"})
+        .reset_index()
+    )
+
+    # In[50]:
+
+    # Merging Both Pivot Table 'Pending'
+    pending_df = pd.merge(
+        pending_asp_2b_pivot,
+        pending_asp_books_pivot,
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"],
+    )
+
+    # Renaming Columns Name of 'pending'
+    pending_df.rename(
+        columns={
+            "Gross Total_x": "2B Gross Total",
+            "BASIC_x": "2B BASIC",
+            "CGST_x": "2B CGST",
+            "SGST_x": "2B SGST",
+            "IGST_x": "2B IGST",
+            "Gross Total_y": "BOOKS Gross Total",
+            "BASIC_y": "BOOKS BASIC",
+            "CGST_y": "BOOKS CGST",
+            "SGST_y": "BOOKS SGST",
+            "IGST_y": "BOOKS IGST",
+        },
+        inplace=True,
+    )
+
+    # Merging Both Pivot Table 'Extra'
+    extra_df = pd.merge(
+        extra_asp_2b_pivot,
+        extra_asp_books_pivot,
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"],
+    )
+
+    # Renaming Columns Name of 'extra_df'
+    extra_df.rename(
+        columns={
+            "Gross Total_x": "2B Gross Total",
+            "BASIC_x": "2B BASIC",
+            "CGST_x": "2B CGST",
+            "SGST_x": "2B SGST",
+            "IGST_x": "2B IGST",
+            "Gross Total_y": "BOOKS Gross Total",
+            "BASIC_y": "BOOKS BASIC",
+            "CGST_y": "BOOKS CGST",
+            "SGST_y": "BOOKS SGST",
+            "IGST_y": "BOOKS IGST",
+        },
+        inplace=True,
+    )
+
+    # In[51]:
+
+    # Calculating Difference
+    pending_df.loc[:, "BASIC_diff"] = (
+        pending_df.loc[:, "2B BASIC"] - pending_df.loc[:, "BOOKS BASIC"]
+    )
+    pending_df.loc[:, "CGST_diff"] = (
+        pending_df.loc[:, "2B CGST"] - pending_df.loc[:, "BOOKS CGST"]
+    )
+    pending_df.loc[:, "SGST_diff"] = (
+        pending_df.loc[:, "2B SGST"] - pending_df.loc[:, "BOOKS SGST"]
+    )
+    pending_df.loc[:, "IGST_diff"] = (
+        pending_df.loc[:, "2B IGST"] - pending_df.loc[:, "BOOKS IGST"]
+    )
+
+    # Addition of All GST's Diff
+    pending_df.loc[:, "GST_diff_total"] = (
+        pending_df.loc[:, "CGST_diff"]
+        + pending_df.loc[:, "SGST_diff"]
+        + pending_df.loc[:, "IGST_diff"]
+    )
+
+    # Rearrancing Columns
+    pending_df = pending_df[
+        [
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "Bill No",
+            "Month",
+            "Year",
+            "2B BASIC",
+            "BOOKS BASIC",
+            "2B CGST",
+            "BOOKS CGST",
+            "2B SGST",
+            "BOOKS SGST",
+            "2B IGST",
+            "BOOKS IGST",
+            "BASIC_diff",
+            "CGST_diff",
+            "SGST_diff",
+            "IGST_diff",
+            "GST_diff_total",
+        ]
+    ]
+
+    # In[52]:
+
+    # Calculating Difference
+    extra_df.loc[:, "BASIC_diff"] = (
+        extra_df.loc[:, "2B BASIC"] - extra_df.loc[:, "BOOKS BASIC"]
+    )
+    extra_df.loc[:, "CGST_diff"] = (
+        extra_df.loc[:, "2B CGST"] - extra_df.loc[:, "BOOKS CGST"]
+    )
+    extra_df.loc[:, "SGST_diff"] = (
+        extra_df.loc[:, "2B SGST"] - extra_df.loc[:, "BOOKS SGST"]
+    )
+    extra_df.loc[:, "IGST_diff"] = (
+        extra_df.loc[:, "2B IGST"] - extra_df.loc[:, "BOOKS IGST"]
+    )
+
+    # Addition of All GST's Diff
+    extra_df.loc[:, "GST_diff_total"] = (
+        extra_df.loc[:, "CGST_diff"]
+        + extra_df.loc[:, "SGST_diff"]
+        + extra_df.loc[:, "IGST_diff"]
+    )
+
+    # Rearrancing Columns
+    extra_df = extra_df[
+        [
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "Bill No",
+            "Month",
+            "Year",
+            "2B BASIC",
+            "BOOKS BASIC",
+            "2B CGST",
+            "BOOKS CGST",
+            "2B SGST",
+            "BOOKS SGST",
+            "2B IGST",
+            "BOOKS IGST",
+            "BASIC_diff",
+            "CGST_diff",
+            "SGST_diff",
+            "IGST_diff",
+            "GST_diff_total",
+        ]
+    ]
+
+    # In[53]:
+
+    # Extra
+    pending_df["STATUS"] = ""
+
+    for i in range(pending_df.shape[0]):
+        if (pending_df["GST_diff_total"][i] < 0) or (
+            pending_df["GST_diff_total"][i] > 0
+        ):
+            pending_df.loc[i, "STATUS"] = "Review Required"
+        elif pending_df["GST_diff_total"][i] == 0:
+            pending_df.loc[i, "STATUS"] = "OK"
+        else:
+            pending_df.loc[i, "STATUS"] = "Pending Claim"
+
+    # In[54]:
+
+    # Extra
+    extra_df["STATUS"] = ""
+
+    for i in range(extra_df.shape[0]):
+        if (extra_df["GST_diff_total"][i] < 0) or (extra_df["GST_diff_total"][i] > 0):
+            extra_df.loc[i, "STATUS"] = "Review Required"
+        elif extra_df["GST_diff_total"][i] == 0:
+            extra_df.loc[i, "STATUS"] = "OK"
+        else:
+            extra_df.loc[i, "STATUS"] = "Extra Claimed"
+
+    # In[ ]:
+
+    # In[55]:
+
+    # Joining Data for STATUS column
+    pending_data = pd.merge(
+        pending_data,
+        pending_df[
+            ["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year", "STATUS"]
+        ],
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"],
+    )
+
+    # Dropping STATUS_x column
+    pending_data.drop(columns={"STATUS_x"}, inplace=True)
+
+    # Renaming 'STATUS_y' column to 'STATUS'
+    pending_data.rename(columns={"STATUS_y": "STATUS"}, inplace=True)
+
+    # Separating Review/Pending rows
+    pending_review = pending_data[pending_data["STATUS"] == "Review Required"]
+    pending_ok = pending_data[pending_data["STATUS"] == "OK"]
+    pending_data = pending_data[pending_data["STATUS"] == "Pending Claim"]
+
+    # In[56]:
+
+    # Joining Data for STATUS column
+    extra_data = pd.merge(
+        extra_data,
+        extra_df[["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year", "STATUS"]],
+        how="outer",
+        on=["SUPPLIER NAME", "GSTIN/UIN", "Bill No", "Month", "Year"],
+    )
+
+    # Dropping STATUS_x column
+    extra_data.drop(columns={"STATUS_x"}, inplace=True)
+
+    # Renaming 'STATUS_y' column to 'STATUS'
+    extra_data.rename(columns={"STATUS_y": "STATUS"}, inplace=True)
+
+    # Separating Review/Extra rows
+    extra_review = extra_data[extra_data["STATUS"] == "Review Required"]
+    extra_ok = extra_data[extra_data["STATUS"] == "OK"]
+    extra_data = extra_data[extra_data["STATUS"] == "Extra Claimed"]
+
+    # In[57]:
+
+    # All Review rows
+    review_data = pd.concat([pending_review, extra_review], ignore_index=True)
+
+    # OK status rows
+    ok_data = main_data_df[main_data_df["STATUS"] == "OK"]
+
+    # In[58]:
+
+    # Creating main_data_df
+    main_data_df = pd.concat(
+        [pending_data, extra_data, ok_data, review_data, extra_ok, pending_ok],
+        ignore_index=True,
+    )
+
+    # In[ ]:
+
+    # In[ ]:
+
+    # In[ ]:
+
+    # In[ ]:
+
+    # In[59]:
 
     # Dropping useless columns for export
     # merged_df.drop(columns=['Bill No','Month','Year'],inplace=True)
@@ -788,17 +1179,17 @@ def exepy():
 
     pending_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
     extra_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
-    ok_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
+    # ok_data.drop(columns=['Bill No','Month','Year'],inplace=True)
     review_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
 
-    # In[45]:
+    # In[60]:
 
     # Empty GST Number
     empty_gdt_data = main_data_df[main_data_df["GSTIN/UIN"].isnull()].reset_index(
         drop=True
     )
 
-    # In[46]:
+    # In[61]:
 
     # Getting state name using GST number
     states = {
@@ -817,19 +1208,17 @@ def exepy():
 
     state_name = states[file_gst_no[:2]]
 
-    # In[47]:
+    # In[62]:
 
     # Exporting Data To Another sheet
 
-    file_name = (
-        f"ITC Reconsilation {file_gst_no} {state_name} {current_month_name}.xlsx"
-    )
+    file_name = f"ITC Reco. 2B VS {file_gst_no} {state_name} {current_month_name}.xlsx"
 
     with pd.ExcelWriter(file_name, mode="w") as writer:
-        merged_df.to_excel(writer, sheet_name="SUMMARY", index=False)
+        summary_df.to_excel(writer, sheet_name="SUMMARY", index=False)
+        # merged_df.to_excel(writer, sheet_name='SUMMARY', index=False)
 
     with pd.ExcelWriter(file_name, mode="a", if_sheet_exists="replace") as writer:
-        summary_df.to_excel(writer, sheet_name="SUPPLIER WISE", index=False)
         main_data_df.to_excel(writer, sheet_name="ITC 2B VS BOOKS", index=False)
         pending_data.to_excel(writer, sheet_name="PENDING", index=False)
         extra_data.to_excel(writer, sheet_name="EXTRA", index=False)
