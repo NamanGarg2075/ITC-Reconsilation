@@ -1,5 +1,6 @@
 # Specification files
 *.spec
+2a.ipynb
 
 # dir
 build
