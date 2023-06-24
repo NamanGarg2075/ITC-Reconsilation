@@ -47,8 +47,9 @@ def asp2a():
     file_gst_no = pd.read_excel(b2b_path, sheet_name="Read me")["Unnamed: 2"][0]
 
     # Adding Last Month 'DATA FROM' column
-    pending_last_month["Data From"] = "Last Month Pending Claim"
-    extra_last_month["Data From"] = "Last Month Extra Claim"
+    if last_month_input.lower() == 'y':
+        pending_last_month["Data From"] = "Last Month Pending Claim"
+        extra_last_month["Data From"] = "Last Month Extra Claim"
 
     # In[3]:
 
