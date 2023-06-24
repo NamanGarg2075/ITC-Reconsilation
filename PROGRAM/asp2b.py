@@ -43,6 +43,10 @@ def asp2b():
         1
     ]
 
+    # Adding Last Month 'DATA FROM' column
+    pending_last_month['Data From'] = 'Last Month Pending Claim'
+    extra_last_month['Data From'] = 'Last Month Extra Claim'
+
     # In[3]:
 
     # Changing LAST MONTH RECO file Voucher Date to Date
@@ -98,7 +102,7 @@ def asp2b():
 
     # converting to negative values of 'Credit Note'
     for i in range(b2b_cdnr.shape[0]):
-        if b2b_cdnr.loc[i, "Invoice type"] == "Credit Note":
+        if b2b_cdnr.loc[i, "Invoice type"].lower() == 'credit note':
             b2b_cdnr.loc[i, "Invoice Value(₹)"] = 0 - b2b_cdnr["Invoice Value(₹)"][i]
             b2b_cdnr.loc[i, "Taxable Value (₹)"] = 0 - b2b_cdnr["Taxable Value (₹)"][i]
             b2b_cdnr.loc[i, "Integrated Tax(₹)"] = 0 - b2b_cdnr["Integrated Tax(₹)"][i]
@@ -174,8 +178,10 @@ def asp2b():
     # Adding Columns
     REMARKS = ""
     STATUS = ""
-    purchase.insert(2, "REMARKS", REMARKS)
-    purchase.insert(12, "STATUS", STATUS)
+    data_from = ''
+    purchase.insert(2,'REMARKS',REMARKS)
+    purchase.insert(12,'STATUS',STATUS)
+    purchase.insert(13,'Data From',data_from)
 
     # In[11]:
 
@@ -775,48 +781,31 @@ def asp2b():
     # In[43]:
 
     # Filling 'NaN' values with '0'
-    summary_df["2B BASIC"] = summary_df["2B BASIC"].fillna(0)
-    summary_df["2B CGST"] = summary_df["2B CGST"].fillna(0)
-    summary_df["2B SGST"] = summary_df["2B SGST"].fillna(0)
-    summary_df["2B IGST"] = summary_df["2B IGST"].fillna(0)
-    summary_df["BOOKS BASIC"] = summary_df["BOOKS BASIC"].fillna(0)
-    summary_df["BOOKS CGST"] = summary_df["BOOKS CGST"].fillna(0)
-    summary_df["BOOKS SGST"] = summary_df["BOOKS SGST"].fillna(0)
-    summary_df["BOOKS IGST"] = summary_df["BOOKS IGST"].fillna(0)
+    summary_df['2B BASIC'] = summary_df['2B BASIC'].fillna(0)
+    summary_df['2B CGST'] = summary_df['2B CGST'].fillna(0)
+    summary_df['2B SGST'] = summary_df['2B SGST'].fillna(0)
+    summary_df['2B IGST'] = summary_df['2B IGST'].fillna(0)
+    summary_df['BOOKS BASIC'] = summary_df['BOOKS BASIC'].fillna(0)
+    summary_df['BOOKS CGST'] = summary_df['BOOKS CGST'].fillna(0)
+    summary_df['BOOKS SGST'] = summary_df['BOOKS SGST'].fillna(0)
+    summary_df['BOOKS IGST'] = summary_df['BOOKS IGST'].fillna(0)
 
     # Calculating Difference
-    summary_df["BASIC_diff"] = summary_df["2B BASIC"] - summary_df["BOOKS BASIC"]
-    summary_df["CGST_diff"] = summary_df["2B CGST"] - summary_df["BOOKS CGST"]
-    summary_df["SGST_diff"] = summary_df["2B SGST"] - summary_df["BOOKS SGST"]
-    summary_df["IGST_diff"] = summary_df["2B IGST"] - summary_df["BOOKS IGST"]
+    summary_df['2B_VS_Books_BASIC_diff'] = summary_df['2B BASIC'] - summary_df['BOOKS BASIC']
+    summary_df['2B_VS_Books_CGST_diff'] = summary_df['2B CGST'] - summary_df['BOOKS CGST']
+    summary_df['2B_VS_Books_SGST_diff'] = summary_df['2B SGST'] - summary_df['BOOKS SGST']
+    summary_df['2B_VS_Books_IGST_diff'] = summary_df['2B IGST'] - summary_df['BOOKS IGST']
+
+    # Creating GST total for BOTH column
+    summary_df['2B_total_GST'] = summary_df['2B CGST'] + summary_df['2B SGST'] + summary_df['2B IGST']
+    summary_df['BOOKS_total_GST'] = summary_df['BOOKS CGST'] + summary_df['BOOKS SGST'] + summary_df['BOOKS IGST']
 
     # Addition of All GST's Diff
-    summary_df["GST_diff_total"] = (
-        summary_df["CGST_diff"] + summary_df["SGST_diff"] + summary_df["IGST_diff"]
-    )
+    summary_df['Total_GST_diff'] = summary_df['2B_VS_Books_CGST_diff'] + summary_df['2B_VS_Books_SGST_diff'] + summary_df['2B_VS_Books_IGST_diff']
+
 
     # Rearrancing Columns
-    summary_df = summary_df[
-        [
-            "SUPPLIER NAME",
-            "GSTIN/UIN",
-            "Month",
-            "Year",
-            "2B BASIC",
-            "BOOKS BASIC",
-            "2B CGST",
-            "BOOKS CGST",
-            "2B SGST",
-            "BOOKS SGST",
-            "2B IGST",
-            "BOOKS IGST",
-            "BASIC_diff",
-            "CGST_diff",
-            "SGST_diff",
-            "IGST_diff",
-            "GST_diff_total",
-        ]
-    ]
+    summary_df =  summary_df[['SUPPLIER NAME', 'GSTIN/UIN','Month','Year', '2B BASIC', '2B CGST', '2B SGST', '2B IGST','2B_total_GST', 'BOOKS BASIC', 'BOOKS CGST','BOOKS SGST', 'BOOKS IGST','BOOKS_total_GST', '2B_VS_Books_BASIC_diff', '2B_VS_Books_CGST_diff', '2B_VS_Books_SGST_diff', '2B_VS_Books_IGST_diff','Total_GST_diff']]
 
     # In[44]:
 
@@ -825,12 +814,16 @@ def asp2b():
 
     # Filling STATUS column with 'OK', 'PENDING' and 'EXTRA'
     for i in range(summary_df.shape[0]):
-        if summary_df.loc[i, "GST_diff_total"] > 9:
+        if summary_df.loc[i, "Total_GST_diff"] > 9:
             summary_df.loc[i, "STATUS"] = "Extra Claimed"
-        elif summary_df.loc[i, "GST_diff_total"] < -9:
+        elif summary_df.loc[i, "Total_GST_diff"] < -9:
             summary_df.loc[i, "STATUS"] = "Pending Claim"
         else:
             summary_df.loc[i, "STATUS"] = "OK"
+
+    # Adding total row in summary_df
+    total_sum_summary = pd.DataFrame(summary_df.select_dtypes(include='number').sum()).T
+    summary_df = pd.concat([summary_df,total_sum_summary])
 
     # In[45]:
 
@@ -1184,6 +1177,26 @@ def asp2b():
     empty_gdt_data = main_data_df[main_data_df["GSTIN/UIN"].isnull()].reset_index(
         drop=True
     )
+
+    # Adding 'DATA FROM' column to main data
+    main_data_df['DATA FROM'] = main_data_df['Data From']
+    main_data_df.drop(columns=['Data From'],inplace=True)
+
+    # Adding 'DATA FROM' column to pending data
+    pending_data['DATA FROM'] = pending_data['Data From']
+    pending_data.drop(columns=['Data From'],inplace=True)
+
+    # Adding 'DATA FROM' column to extra data
+    extra_data['DATA FROM'] = extra_data['Data From']
+    extra_data.drop(columns=['Data From'],inplace=True)
+
+    # Adding 'DATA FROM' column to review data
+    review_data['DATA FROM'] = review_data['Data From']
+    review_data.drop(columns=['Data From'],inplace=True)
+
+    # Adding 'DATA FROM' column to empty_gdt_data data
+    empty_gdt_data['DATA FROM'] = empty_gdt_data['Data From']
+    empty_gdt_data.drop(columns=['Data From'],inplace=True)
 
     # In[61]:
 
