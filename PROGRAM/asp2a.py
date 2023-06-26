@@ -46,12 +46,14 @@ def asp2a():
     # getting file gst number
     file_gst_no = pd.read_excel(b2b_path, sheet_name="Read me")["Unnamed: 2"][0]
 
+    # In[3]:
+
     # Adding Last Month 'DATA FROM' column
-    if last_month_input.lower() == 'y':
+    if last_month_input.lower() == "y":
         pending_last_month["Data From"] = "Last Month Pending Claim"
         extra_last_month["Data From"] = "Last Month Extra Claim"
 
-    # In[3]:
+    # In[4]:
 
     b2b = b2b[~b2b["Invoice details"].astype(str).str.contains("Total")]
     b2b = b2b[~b2b["GSTIN of supplier"].isna()].reset_index(drop=True)
@@ -59,14 +61,14 @@ def asp2a():
     b2b_cdnr = b2b_cdnr[~b2b_cdnr["Unnamed: 3"].astype(str).str.contains("Total")]
     b2b_cdnr = b2b_cdnr[~b2b_cdnr["GSTIN of Supplier"].isna()].reset_index(drop=True)
 
-    # In[4]:
+    # In[5]:
 
     # Changing LAST MONTH RECO file Voucher Date to Date
     if last_month_input.lower() == "y":
         pending_last_month.rename(columns={"Voucher Date": "Date"}, inplace=True)
         extra_last_month.rename(columns={"Voucher Date": "Date"}, inplace=True)
 
-    # In[5]:
+    # In[6]:
 
     # Renaming columns of B2B and B2B CDNR
     b2b.rename(
@@ -108,12 +110,12 @@ def asp2a():
         pending_last_month.rename(columns={"SUPPLIER NAME": "Trade Name"}, inplace=True)
         extra_last_month.rename(columns={"SUPPLIER NAME": "Trade Name"}, inplace=True)
 
-    # In[6]:
+    # In[7]:
 
     # Dropping 'Regular' column from b2b_cdnr
     b2b_cdnr.drop(columns={"Note Supply type"}, inplace=True)
 
-    # In[7]:
+    # In[8]:
 
     # converting to negative values of 'Credit Note'
     for i in range(b2b_cdnr.shape[0]):
@@ -125,7 +127,7 @@ def asp2a():
             b2b_cdnr.loc[i, "State/UT Tax(₹)"] = 0 - b2b_cdnr["State/UT Tax(₹)"][i]
             b2b_cdnr.loc[i, "Cess(₹)"] = 0 - b2b_cdnr["Cess(₹)"][i]
 
-    # In[8]:
+    # In[9]:
 
     # Concatinating b2b_cdnr data and B2B to B2B
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
@@ -133,7 +135,7 @@ def asp2a():
     # Taking only those rows with 'No' values
     b2b = b2b[b2b["Supply Attract Reverse Charge"] == "N"]
 
-    # In[9]:
+    # In[10]:
 
     # Getting Required Data
     purchase = purchase[
@@ -154,7 +156,7 @@ def asp2a():
     purchase["Cess(₹)"] = 0
     b2b = b2b.iloc[:, :14]
 
-    # In[10]:
+    # In[11]:
 
     # Changing PURCHASE columns data type
     purchase[["Gross Total", "BASIC", "CGST", "SGST", "IGST"]] = purchase[
@@ -187,7 +189,7 @@ def asp2a():
     )
     b2b["Invoice Date"] = pd.to_datetime(b2b["Invoice Date"], dayfirst=True)
 
-    # In[11]:
+    # In[12]:
 
     # Renaming columns
     purchase.rename(columns={"Particulars": "Trade Name"}, inplace=True)
@@ -200,12 +202,12 @@ def asp2a():
     purchase.insert(12, "STATUS", STATUS)
     purchase.insert(13, "Data From", data_from)
 
-    # In[12]:
+    # In[13]:
 
     # Filling REMARKS column
     purchase["REMARKS"] = "AS PER BOOKS"
 
-    # In[13]:
+    # In[14]:
 
     # Creating Dummy Dataframe for concatinating
     b2b_df = pd.DataFrame()
@@ -225,7 +227,7 @@ def asp2a():
     b2b_df["Cess(₹)"] = b2b["Cess(₹)"]
     b2b_df["STATUS"] = ""
 
-    # In[14]:
+    # In[15]:
 
     if last_month_input.lower() == "y":
         # Adding B2B data below PURCHASE
@@ -235,32 +237,32 @@ def asp2a():
     else:
         main_data = pd.concat([purchase, b2b_df], ignore_index=True)
 
-    # In[15]:
+    # In[16]:
 
     # Setting GST NO column
     main_data["GSTIN/UIN"] = main_data["GSTIN/UIN"].str.replace("_x000D_\n", "")
     main_data["GSTIN/UIN"] = main_data["GSTIN/UIN"].str.replace("\n", "")
 
-    # In[16]:
+    # In[17]:
 
     # Calculating GROSS column
     main_data["Gross Total"] = (
         main_data["BASIC"] + main_data["CGST"] + main_data["SGST"] + main_data["IGST"]
     )
 
-    # In[17]:
+    # In[18]:
 
     # Creating SUPPLIER NAME column
     supplier_name = ""
     main_data.insert(2, "SUPPLIER NAME", supplier_name)
 
-    # In[18]:
+    # In[19]:
 
     # Separating 'AS PER BOOKS' and 'AS PER 2A' from main_data
     main_asp_books = main_data[main_data["REMARKS"] == "AS PER BOOKS"]
     main_asp_2b = main_data[main_data["REMARKS"] == "AS PER 2A"]
 
-    # In[19]:
+    # In[20]:
 
     # Grouping on the basis of GSTIN
     books_gstin_join = (
@@ -273,7 +275,7 @@ def asp2a():
     main_asp_2b = pd.merge(main_asp_2b, books_gstin_join, how="left", on="GSTIN/UIN")
     main_asp_2b["Trade Name_y"].fillna(main_asp_2b["Trade Name_x"], inplace=True)
 
-    # In[20]:
+    # In[21]:
 
     # Transfering column [Supplier Name]
     main_asp_2b.loc[:, "SUPPLIER NAME"] = main_asp_2b["Trade Name_y"]
@@ -282,7 +284,7 @@ def asp2a():
     main_data = pd.concat([main_asp_books, main_asp_2b], ignore_index=True)
     main_data.drop(columns=["Trade Name", "Trade Name_x", "Trade Name_y"], inplace=True)
 
-    # In[21]:
+    # In[22]:
 
     # Filling NAN GSTIN
 
@@ -310,7 +312,7 @@ def asp2a():
 
     main_data.rename(columns={"GSTIN/UIN_x": "GSTIN/UIN"}, inplace=True)
 
-    # In[22]:
+    # In[23]:
 
     # Extracting last 2 character of bill Number
     main_data["Bill No"] = main_data["Supplier Invoice No."].apply(
@@ -321,7 +323,7 @@ def asp2a():
     main_data["Month"] = main_data["Supplier Invoice Date"].dt.month
     main_data["Year"] = main_data["Supplier Invoice Date"].dt.year
 
-    # In[23]:
+    # In[24]:
 
     # Creating Pivot Table
 
@@ -345,7 +347,7 @@ def asp2a():
         .reset_index()
     )
 
-    # In[24]:
+    # In[25]:
 
     # Merging Both Pivot Table
     merged_df = pd.merge(
@@ -372,7 +374,7 @@ def asp2a():
         inplace=True,
     )
 
-    # In[25]:
+    # In[26]:
 
     # Filling 'NaN' values with '0'
     merged_df["2A BASIC"] = merged_df["2A BASIC"].fillna(0)
@@ -384,7 +386,7 @@ def asp2a():
     merged_df["BOOKS SGST"] = merged_df["BOOKS SGST"].fillna(0)
     merged_df["BOOKS IGST"] = merged_df["BOOKS IGST"].fillna(0)
 
-    # In[26]:
+    # In[27]:
 
     # Calculating Difference
     merged_df["BASIC_diff"] = merged_df["2A BASIC"] - merged_df["BOOKS BASIC"]
@@ -421,7 +423,7 @@ def asp2a():
         ]
     ]
 
-    # In[27]:
+    # In[28]:
 
     # Creating STATUS column
     merged_df.loc[:, "STATUS"] = ""
@@ -435,7 +437,7 @@ def asp2a():
         else:
             merged_df.loc[i, "STATUS"] = "OK"
 
-    # In[28]:
+    # In[29]:
 
     # Joining Data for STATUS column
     main_data_df = pd.merge(
@@ -451,7 +453,7 @@ def asp2a():
     # Renaming 'STATUS_y' column to 'STATUS'
     main_data_df.rename(columns={"STATUS_y": "STATUS"}, inplace=True)
 
-    # In[29]:
+    # In[30]:
 
     # /******************************  LAST MONTH ********************************/
     current_month = pd.Timestamp.now().month
@@ -475,7 +477,7 @@ def asp2a():
                 i, "LAST CLAIM MONTH"
             ] = f"{data_month[i]} {data_year[i]} CLAIM"
 
-    # In[30]:
+    # In[31]:
 
     # Conterting datetime to date only for export
     main_data_df["Date"] = pd.to_datetime(main_data_df["Date"])
@@ -486,7 +488,7 @@ def asp2a():
     # Renaming Date Column
     main_data_df.rename(columns={"Date": "Voucher Date"}, inplace=True)
 
-    # In[31]:
+    # In[32]:
 
     # Separating pending and extra rows
     pending_data = main_data_df[main_data_df["STATUS"] == "Pending Claim"].reset_index(
@@ -496,7 +498,7 @@ def asp2a():
         drop=True
     )
 
-    # In[32]:
+    # In[33]:
 
     # Creating Separate Data for both 'Pending' and 'Extra' rows
     pending_asp_book = pending_data[pending_data["REMARKS"] == "AS PER BOOKS"]
@@ -505,7 +507,7 @@ def asp2a():
     extra_asp_book = extra_data[extra_data["REMARKS"] == "AS PER BOOKS"]
     extra_asp_2b = extra_data[extra_data["REMARKS"] == "AS PER 2A"]
 
-    # In[33]:
+    # In[34]:
 
     # Creating Pivot for pending both
     pending_asp_books_pivot = (
@@ -538,7 +540,7 @@ def asp2a():
         .reset_index()
     )
 
-    # In[34]:
+    # In[35]:
 
     # Merging Both Pivot Table 'Pending'
     pending_df = pd.merge(
@@ -590,7 +592,7 @@ def asp2a():
         inplace=True,
     )
 
-    # In[35]:
+    # In[36]:
 
     # Calculating Difference
     pending_df["BASIC_diff"] = pending_df["2A BASIC"] - pending_df["BOOKS BASIC"]
@@ -627,7 +629,7 @@ def asp2a():
         ]
     ]
 
-    # In[36]:
+    # In[37]:
 
     # Calculating Difference
     extra_df["BASIC_diff"] = extra_df["2A BASIC"] - extra_df["BOOKS BASIC"]
@@ -664,7 +666,7 @@ def asp2a():
         ]
     ]
 
-    # In[37]:
+    # In[38]:
 
     # Pending
     pending_df["STATUS"] = ""
@@ -677,7 +679,7 @@ def asp2a():
         else:
             pending_df.loc[i, "STATUS"] = "Pending Claim"
 
-    # In[38]:
+    # In[39]:
 
     # Extra
     extra_df["STATUS"] = ""
@@ -688,7 +690,7 @@ def asp2a():
         else:
             extra_df.loc[i, "STATUS"] = "Extra Claimed"
 
-    # In[39]:
+    # In[40]:
 
     # Joining Data for STATUS column
     pending_data = pd.merge(
@@ -710,7 +712,7 @@ def asp2a():
     pending_review = pending_data[pending_data["STATUS"] == "Review Required"]
     pending_data = pending_data[pending_data["STATUS"] == "Pending Claim"]
 
-    # In[40]:
+    # In[41]:
 
     # Joining Data for STATUS column
     extra_data = pd.merge(
@@ -730,7 +732,7 @@ def asp2a():
     extra_review = extra_data[extra_data["STATUS"] == "Review Required"]
     extra_data = extra_data[extra_data["STATUS"] == "Extra Claimed"]
 
-    # In[41]:
+    # In[42]:
 
     # All Review rows
     review_data = pd.concat([pending_review, extra_review], ignore_index=True)
@@ -738,14 +740,14 @@ def asp2a():
     # OK status rows
     ok_data = main_data_df[main_data_df["STATUS"] == "OK"]
 
-    # In[42]:
+    # In[43]:
 
     # Creating main_data_df
     main_data_df = pd.concat(
         [pending_data, extra_data, ok_data, review_data], ignore_index=True
     )
 
-    # In[43]:
+    # In[44]:
 
     # Creating SUMMARY AGAIN on NAME and GSTN
 
@@ -792,7 +794,7 @@ def asp2a():
         inplace=True,
     )
 
-    # In[44]:
+    # In[45]:
 
     # Filling 'NaN' values with '0'
     summary_df["2A BASIC"] = summary_df["2A BASIC"].fillna(0)
@@ -818,14 +820,6 @@ def asp2a():
         summary_df["2A IGST"] - summary_df["BOOKS IGST"]
     )
 
-    # Creating GST total for BOTH column
-    summary_df["2A_total_GST"] = (
-        summary_df["2A CGST"] + summary_df["2A SGST"] + summary_df["2A IGST"]
-    )
-    summary_df["BOOKS_total_GST"] = (
-        summary_df["BOOKS CGST"] + summary_df["BOOKS SGST"] + summary_df["BOOKS IGST"]
-    )
-
     # Addition of All GST's Diff
     summary_df["Total_GST_diff"] = (
         summary_df["2A_VS_Books_CGST_diff"]
@@ -844,12 +838,10 @@ def asp2a():
             "2A CGST",
             "2A SGST",
             "2A IGST",
-            "2A_total_GST",
             "BOOKS BASIC",
             "BOOKS CGST",
             "BOOKS SGST",
             "BOOKS IGST",
-            "BOOKS_total_GST",
             "2A_VS_Books_BASIC_diff",
             "2A_VS_Books_CGST_diff",
             "2A_VS_Books_SGST_diff",
@@ -858,7 +850,7 @@ def asp2a():
         ]
     ]
 
-    # In[45]:
+    # In[46]:
 
     # Creating STATUS column
     summary_df.loc[:, "STATUS"] = ""
@@ -872,11 +864,30 @@ def asp2a():
         else:
             summary_df.loc[i, "STATUS"] = "OK"
 
+    for i in range(summary_df.shape[0]):
+        if (
+            (
+                (summary_df.loc[i, "2A_VS_Books_CGST_diff"] < -1)
+                or (summary_df.loc[i, "2A_VS_Books_CGST_diff"] > 1)
+            )
+            and (
+                (summary_df.loc[i, "2A_VS_Books_SGST_diff"] < -1)
+                or (summary_df.loc[i, "2A_VS_Books_SGST_diff"] > 1)
+            )
+            and (
+                (summary_df.loc[i, "2A_VS_Books_IGST_diff"] < -1)
+                or (summary_df.loc[i, "2A_VS_Books_IGST_diff"] > 1)
+            )
+        ):
+            summary_df.loc[i, "STATUS"] = "Mismatch GST"
+
+    # In[47]:
+
     # Adding total row in summary_df
     total_sum_summary = pd.DataFrame(summary_df.select_dtypes(include="number").sum()).T
     summary_df = pd.concat([summary_df, total_sum_summary])
 
-    # In[46]:
+    # In[48]:
 
     # Joining Data for STATUS column
     main_data_df = pd.merge(
@@ -892,7 +903,7 @@ def asp2a():
     # Renaming 'STATUS_y' column to 'STATUS'
     main_data_df.rename(columns={"STATUS_y": "STATUS"}, inplace=True)
 
-    # In[47]:
+    # In[49]:
 
     # /******************************  LAST MONTH ********************************/
     current_month = pd.Timestamp.now().month
@@ -916,16 +927,12 @@ def asp2a():
                 i, "LAST CLAIM MONTH"
             ] = f"{data_month[i]} {data_year[i]} CLAIM"
 
-    # In[48]:
+    # In[50]:
 
     pending_data = main_data_df[main_data_df["STATUS"] == "Pending Claim"]
     extra_data = main_data_df[main_data_df["STATUS"] == "Extra Claimed"]
 
-    # In[ ]:
-
-    # In[ ]:
-
-    # In[49]:
+    # In[51]:
 
     pending_asp_book = pending_data[pending_data["REMARKS"] == "AS PER BOOKS"]
     pending_asp_2b = pending_data[pending_data["REMARKS"] == "AS PER 2A"]
@@ -933,7 +940,7 @@ def asp2a():
     extra_asp_book = extra_data[extra_data["REMARKS"] == "AS PER BOOKS"]
     extra_asp_2b = extra_data[extra_data["REMARKS"] == "AS PER 2A"]
 
-    # In[50]:
+    # In[52]:
 
     # Creating Pivot for pending both
     pending_asp_books_pivot = (
@@ -967,7 +974,7 @@ def asp2a():
         .reset_index()
     )
 
-    # In[51]:
+    # In[53]:
 
     # Merging Both Pivot Table 'Pending'
     pending_df = pd.merge(
@@ -1019,7 +1026,7 @@ def asp2a():
         inplace=True,
     )
 
-    # In[52]:
+    # In[54]:
 
     # Calculating Difference
     pending_df.loc[:, "BASIC_diff"] = (
@@ -1066,7 +1073,7 @@ def asp2a():
         ]
     ]
 
-    # In[53]:
+    # In[55]:
 
     # Calculating Difference
     extra_df.loc[:, "BASIC_diff"] = (
@@ -1113,7 +1120,7 @@ def asp2a():
         ]
     ]
 
-    # In[54]:
+    # In[56]:
 
     # Extra
     pending_df["STATUS"] = ""
@@ -1128,7 +1135,7 @@ def asp2a():
         else:
             pending_df.loc[i, "STATUS"] = "Pending Claim"
 
-    # In[55]:
+    # In[57]:
 
     # Extra
     extra_df["STATUS"] = ""
@@ -1141,9 +1148,7 @@ def asp2a():
         else:
             extra_df.loc[i, "STATUS"] = "Extra Claimed"
 
-    # In[ ]:
-
-    # In[56]:
+    # In[58]:
 
     # Joining Data for STATUS column
     pending_data = pd.merge(
@@ -1166,7 +1171,7 @@ def asp2a():
     pending_ok = pending_data[pending_data["STATUS"] == "OK"]
     pending_data = pending_data[pending_data["STATUS"] == "Pending Claim"]
 
-    # In[57]:
+    # In[59]:
 
     # Joining Data for STATUS column
     extra_data = pd.merge(
@@ -1187,7 +1192,7 @@ def asp2a():
     extra_ok = extra_data[extra_data["STATUS"] == "OK"]
     extra_data = extra_data[extra_data["STATUS"] == "Extra Claimed"]
 
-    # In[58]:
+    # In[60]:
 
     # All Review rows
     review_data = pd.concat([pending_review, extra_review], ignore_index=True)
@@ -1195,15 +1200,26 @@ def asp2a():
     # OK status rows
     ok_data = main_data_df[main_data_df["STATUS"] == "OK"]
 
-    # In[59]:
+    # Mismatch GST status rows
+    mismatch_gst_data = main_data_df[main_data_df["STATUS"] == "Mismatch GST"]
+
+    # In[61]:
 
     # Creating main_data_df
     main_data_df = pd.concat(
-        [pending_data, extra_data, ok_data, review_data, extra_ok, pending_ok],
+        [
+            pending_data,
+            extra_data,
+            ok_data,
+            review_data,
+            extra_ok,
+            pending_ok,
+            mismatch_gst_data,
+        ],
         ignore_index=True,
     )
 
-    # In[60]:
+    # In[62]:
 
     # Dropping useless columns for export
     # merged_df.drop(columns=['Bill No','Month','Year'],inplace=True)
@@ -1213,13 +1229,16 @@ def asp2a():
     extra_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
     # ok_data.drop(columns=['Bill No','Month','Year'],inplace=True)
     review_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
+    mismatch_gst_data.drop(columns=["Bill No", "Month", "Year"], inplace=True)
 
-    # In[61]:
+    # In[63]:
 
     # Empty GST Number
     empty_gdt_data = main_data_df[main_data_df["GSTIN/UIN"].isnull()].reset_index(
         drop=True
     )
+
+    # In[67]:
 
     # Adding 'DATA FROM' column to main data
     main_data_df["DATA FROM"] = main_data_df["Data From"]
@@ -1241,7 +1260,135 @@ def asp2a():
     empty_gdt_data["DATA FROM"] = empty_gdt_data["Data From"]
     empty_gdt_data.drop(columns=["Data From"], inplace=True)
 
-    # In[62]:
+    # Adding 'DATA FROM' column to mismatch_gst_data data
+    mismatch_gst_data["DATA FROM"] = mismatch_gst_data["Data From"]
+    mismatch_gst_data.drop(columns=["Data From"], inplace=True)
+
+    # In[69]:
+
+    # Rearraging all data
+    main_data_df = main_data_df[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+    pending_data = pending_data[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+    extra_data = extra_data[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+    review_data = review_data[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+    mismatch_gst_data = mismatch_gst_data[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+    empty_gdt_data = empty_gdt_data[
+        [
+            "Voucher Date",
+            "SUPPLIER NAME",
+            "GSTIN/UIN",
+            "REMARKS",
+            "Voucher Type",
+            "Supplier Invoice No.",
+            "Supplier Invoice Date",
+            "Gross Total",
+            "BASIC",
+            "CGST",
+            "SGST",
+            "IGST",
+            "Cess(₹)",
+            "LAST CLAIM MONTH",
+            "STATUS",
+            "DATA FROM",
+        ]
+    ]
+
+    # In[70]:
 
     # Getting state name using GST number
     states = {
@@ -1260,7 +1407,7 @@ def asp2a():
 
     state_name = states[file_gst_no[:2]]
 
-    # In[69]:
+    # In[71]:
 
     # Exporting Data To Another sheet
 
@@ -1275,6 +1422,7 @@ def asp2a():
         pending_data.to_excel(writer, sheet_name="PENDING", index=False)
         extra_data.to_excel(writer, sheet_name="EXTRA", index=False)
         review_data.to_excel(writer, sheet_name="REVIEW", index=False)
+        mismatch_gst_data.to_excel(writer, sheet_name="MISMATCH GST", index=False)
         empty_gdt_data.to_excel(writer, sheet_name="MISSING GSTIN", index=False)
 
     # ending time
