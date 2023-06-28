@@ -465,10 +465,10 @@ def asp2b():
     # In[31]:
 
     # Conterting datetime to date only for export
-    main_data_df["Date"] = pd.to_datetime(main_data_df["Date"]).dt.date
+    main_data_df["Date"] = pd.to_datetime(main_data_df["Date"])
     main_data_df["Supplier Invoice Date"] = pd.to_datetime(
         main_data_df["Supplier Invoice Date"]
-    ).dt.date
+    )
 
     # Renaming Date Column
     main_data_df.rename(columns={"Date": "Voucher Date"}, inplace=True)
@@ -1380,6 +1380,21 @@ def asp2b():
             "DATA FROM",
         ]
     ]
+
+    # Applying colors
+    def highlight_rows(row):
+        if (row['CGST'] < 0) or (row['SGST'] < 0) or (row['IGST'] < 0):
+            return ['color: red'] * len(row)
+        else:
+            return [''] * len(row)  # empty style for other rows
+        
+    main_data_df = main_data_df.style.apply(highlight_rows,axis=1)
+    pending_data = pending_data.style.apply(highlight_rows,axis=1)
+    extra_data = extra_data.style.apply(highlight_rows,axis=1)
+    review_data = review_data.style.apply(highlight_rows,axis=1)
+    mismatch_gst_data = mismatch_gst_data.style.apply(highlight_rows,axis=1)
+    empty_gdt_data = empty_gdt_data.style.apply(highlight_rows,axis=1)
+
 
     # In[69]:
 

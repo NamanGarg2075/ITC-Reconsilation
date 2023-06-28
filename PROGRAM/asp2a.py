@@ -1388,6 +1388,20 @@ def asp2a():
         ]
     ]
 
+    # Applying colors
+    def highlight_rows(row):
+        if (row["CGST"] < 0) or (row["SGST"] < 0) or (row["IGST"] < 0):
+            return ["color: red"] * len(row)
+        else:
+            return [""] * len(row)  # empty style for other rows
+
+    main_data_df = main_data_df.style.apply(highlight_rows, axis=1)
+    pending_data = pending_data.style.apply(highlight_rows, axis=1)
+    extra_data = extra_data.style.apply(highlight_rows, axis=1)
+    review_data = review_data.style.apply(highlight_rows, axis=1)
+    mismatch_gst_data = mismatch_gst_data.style.apply(highlight_rows, axis=1)
+    empty_gdt_data = empty_gdt_data.style.apply(highlight_rows, axis=1)
+
     # In[70]:
 
     # Getting state name using GST number
