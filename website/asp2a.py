@@ -25,6 +25,8 @@ def asp2a(app):
         0:2
     ]
     current_monn_file = pd.to_datetime(current_monn_file, format="%m").month_name()
+    if current_monn_file not in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November','December']:
+        current_monn_file = 'March'
     current_month_name = current_monn_file
 
     # getting file gst number
@@ -104,7 +106,7 @@ def asp2a(app):
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
 
     # Taking only those rows with 'No' values
-    b2b = b2b[b2b["Supply Attract Reverse Charge"] == "N"]
+    b2b = b2b[(b2b['Supply Attract Reverse Charge'].str.lower()=='n') | (b2b['Supply Attract Reverse Charge'].str.lower()=='no')]
 
     # Getting Required Data
     purchase = purchase[

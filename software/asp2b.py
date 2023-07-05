@@ -36,6 +36,21 @@ def asp2b():
     current_monn_file = pd.read_excel(b2b_path, sheet_name="Read me", skiprows=3).iloc[
         :, 2
     ][0]
+    if current_monn_file not in [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]:
+        current_monn_file = "March"
     current_month_name = current_monn_file
 
     # getting file gst number
@@ -116,7 +131,7 @@ def asp2b():
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
 
     # Taking only those rows with 'No' values
-    b2b = b2b[b2b["Supply Attract Reverse Charge"] == "No"]
+    b2b = b2b[(b2b['Supply Attract Reverse Charge'].str.lower()=='n') | (b2b['Supply Attract Reverse Charge'].str.lower()=='no')]
 
     # In[10]:
 
@@ -1383,18 +1398,17 @@ def asp2b():
 
     # Applying colors
     def highlight_rows(row):
-        if (row['CGST'] < 0) or (row['SGST'] < 0) or (row['IGST'] < 0):
-            return ['color: red'] * len(row)
+        if (row["CGST"] < 0) or (row["SGST"] < 0) or (row["IGST"] < 0):
+            return ["color: red"] * len(row)
         else:
-            return [''] * len(row)  # empty style for other rows
-        
-    main_data_df = main_data_df.style.apply(highlight_rows,axis=1)
-    pending_data = pending_data.style.apply(highlight_rows,axis=1)
-    extra_data = extra_data.style.apply(highlight_rows,axis=1)
-    review_data = review_data.style.apply(highlight_rows,axis=1)
-    mismatch_gst_data = mismatch_gst_data.style.apply(highlight_rows,axis=1)
-    empty_gdt_data = empty_gdt_data.style.apply(highlight_rows,axis=1)
+            return [""] * len(row)  # empty style for other rows
 
+    main_data_df = main_data_df.style.apply(highlight_rows, axis=1)
+    pending_data = pending_data.style.apply(highlight_rows, axis=1)
+    extra_data = extra_data.style.apply(highlight_rows, axis=1)
+    review_data = review_data.style.apply(highlight_rows, axis=1)
+    mismatch_gst_data = mismatch_gst_data.style.apply(highlight_rows, axis=1)
+    empty_gdt_data = empty_gdt_data.style.apply(highlight_rows, axis=1)
 
     # In[69]:
 

@@ -3,14 +3,16 @@
 
 <head>
     <title>ITC RECONCILIATION</title>
+    <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='images/icon.ico')}}">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background-color: #1bb7b12b;
+        }
+
+        .margin_top {
+            margin-top: 100px;
         }
 
         .hidden {
@@ -20,8 +22,18 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1 class="text-center">ITC Reconciliation</h1>
+    <nav class="navbar " style="background-color: #183144;" data-bs-theme="dark">
+        <div class=" container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="{{url_for('static', filename='images/logo.jpg')}}" alt="Logo" width="30" height="24"
+                    class="d-inline-block align-text-top">
+                ITC RECONCILIATION
+            </a>
+        </div>
+    </nav>
+
+    <div class="container margin_top">
+        <!-- <h1 class="text-center">ITC Reconciliation</h1> -->
         <form action="/process" method="post" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6 offset-md-3">
@@ -43,7 +55,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check">
+                        <div class="form-check" style="padding-left: 6.5em;">
                             <input type="checkbox" name="lastMonth" id="checkbox" onclick="togglelastMonthFile()"
                                 class="form-check-input">
                             <label class="form-check-label" for="checkbox">Upload Last Month File</label>
