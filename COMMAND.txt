@@ -1,1 +1,1 @@
-pyinstaller --onefile --icon=icon.ico  --name "ITC Reconsiliation" software/MAIN APP.py"
+pyinstaller --onefile --icon=icon.ico  --name "ITC Reconsiliation" software/app.py"

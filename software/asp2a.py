@@ -41,8 +41,21 @@ def asp2a():
         0:2
     ]
     current_monn_file = pd.to_datetime(current_monn_file, format="%m").month_name()
-    if current_monn_file not in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November','December']:
-        current_monn_file = 'March'
+    if current_monn_file not in [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]:
+        current_monn_file = "March"
     current_month_name = current_monn_file
 
     # getting file gst number
@@ -135,7 +148,10 @@ def asp2a():
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
 
     # Taking only those rows with 'No' values
-    b2b = b2b[(b2b['Supply Attract Reverse Charge'].str.lower()=='n') | (b2b['Supply Attract Reverse Charge'].str.lower()=='no')]
+    b2b = b2b[
+        (b2b["Supply Attract Reverse Charge"].str.lower() == "n")
+        | (b2b["Supply Attract Reverse Charge"].str.lower() == "no")
+    ]
 
     # In[10]:
 
@@ -1432,6 +1448,7 @@ def asp2a():
     with pd.ExcelWriter(
         file_name, mode="w", engine="xlsxwriter", datetime_format="dd-mm-yyyy"
     ) as writer:
+        b2b.to_excel(writer, sheet_name="2A", index=False)
         summary_df.to_excel(writer, sheet_name="SUMMARY", index=False)
         # merged_df.to_excel(writer, sheet_name='SUMMARY', index=False)
         main_data_df.to_excel(writer, sheet_name="ITC 2A VS BOOKS", index=False)

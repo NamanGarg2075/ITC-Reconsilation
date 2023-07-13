@@ -131,7 +131,10 @@ def asp2b():
     b2b = pd.concat([b2b, b2b_cdnr], ignore_index=True)
 
     # Taking only those rows with 'No' values
-    b2b = b2b[(b2b['Supply Attract Reverse Charge'].str.lower()=='n') | (b2b['Supply Attract Reverse Charge'].str.lower()=='no')]
+    b2b = b2b[
+        (b2b["Supply Attract Reverse Charge"].str.lower() == "n")
+        | (b2b["Supply Attract Reverse Charge"].str.lower() == "no")
+    ]
 
     # In[10]:
 
@@ -1438,6 +1441,7 @@ def asp2b():
     with pd.ExcelWriter(
         file_name, mode="w", engine="xlsxwriter", datetime_format="dd-mm-yyyy"
     ) as writer:
+        b2b.to_excel(writer, sheet_name="2B", index=False)
         summary_df.to_excel(writer, sheet_name="SUMMARY", index=False)
         # merged_df.to_excel(writer, sheet_name='SUMMARY', index=False)
         main_data_df.to_excel(writer, sheet_name="ITC 2B VS BOOKS", index=False)
